@@ -1,0 +1,2295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTIS TRO Analysis - Central Railway</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg: #f0f4f8;
+            --panel: #ffffff;
+            --border: #d9e0e7;
+            --text: #1f2933;
+            --muted: #5f6c7b;
+            --primary: #004a99;
+            --primary-dark: #003366;
+            --success: #1b8a3d;
+            --error: #c62828;
+            --warn: #b26a00;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .app-header {
+            background: var(--primary-dark);
+            color: white;
+            padding: 20px 20px 0 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .official-titles { margin-bottom: 10px; }
+        .official-titles .title-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            flex-wrap: nowrap;
+        }
+        .official-titles .title-row .t-main {
+            font-size: 22px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .official-titles .title-row .t-sep {
+            font-size: 20px;
+            margin: 0 10px;
+            opacity: 0.45;
+        }
+        .official-titles .title-row .t-left {
+            font-size: 17px;
+            font-weight: 600;
+        }
+        .official-titles .title-row .t-right {
+            font-size: 17px;
+            font-weight: 500;
+            color: #d1e4f3;
+        }
+        .official-titles h4 { margin: 6px 0 0 0; font-size: 16px; color: #ffc107; }
+
+        .header-status {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 5px 14px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 8px 0 14px 0;
+            background: rgba(255,255,255,0.12);
+            color: #e0ecf8;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: background 0.3s, color 0.3s;
+        }
+        .header-status.success { background: rgba(27,138,61,0.3); color: #a8f0c0; border-color: rgba(27,138,61,0.5); }
+        .header-status.error   { background: rgba(198,40,40,0.3); color: #ffd0d0; border-color: rgba(198,40,40,0.5); }
+        .header-status.warn     { background: rgba(178,106,0,0.3); color: #ffe5a0; border-color: rgba(178,106,0,0.4); }
+
+        .tabs { display: flex; gap: 5px; justify-content: center; }
+
+        .tab-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .tab-btn:hover { background: rgba(255,255,255,0.25); }
+        .tab-btn.active { background: var(--panel); color: var(--primary-dark); }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        body.graph-active .main-container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page-section {
+            display: none;
+            background: var(--panel);
+            padding: 24px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            min-height: 500px;
+        }
+        .page-section.active { display: block; }
+
+        #page1 {
+            background: #eef2f7;
+            padding: 20px;
+        }
+
+        .form-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,60,120,0.07);
+            padding: 18px 22px 20px;
+            margin-bottom: 16px;
+            border: 1px solid #dde5ef;
+        }
+
+        .form-section-title {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--primary-dark);
+            font-size: 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 16px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e4eaf2;
+        }
+
+        .form-section-title .section-icon {
+            background: var(--primary);
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .input-item { display: flex; flex-direction: column; gap: 5px; }
+
+        label {
+            font-weight: 700;
+            color: #3a4a5c;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        select, input, button {
+            padding: 9px 11px;
+            border-radius: 7px;
+            border: 1.5px solid #ccd6e0;
+            font: inherit;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0,74,153,0.12);
+        }
+
+        select, input[type="file"], input[type="date"],
+        input[type="text"], input[type="number"] { background: #fff; }
+
+        input[type="file"] {
+            padding: 7px 10px;
+            background: #f4f7fb;
+            border-style: dashed;
+            cursor: pointer;
+            color: var(--muted);
+        }
+        input[type="file"]:hover { border-color: var(--primary); background: #eef3fb; }
+
+        input.readonly-field {
+            background: #f0f4f8;
+            color: var(--muted);
+            font-weight: 600;
+            cursor: not-allowed;
+            border-color: #dde5ef;
+            border-style: dashed;
+        }
+
+        .crew-role-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-lp  { background: #dbeafe; color: #1e40af; }
+        .badge-alp { background: #dcfce7; color: #166534; }
+
+        .grid-train-row1 { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 0; }
+        .grid-train-row2 { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 14px; margin-bottom: 0; margin-top: 14px; }
+        .grid-crew      { display: grid; grid-template-columns: 1fr 2fr 0.5fr 1.5fr; gap: 14px; margin-bottom: 0; }
+        .grid-analysis  { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 0; }
+
+        .crew-divider {
+            border: none;
+            border-top: 1px dashed #d0dae6;
+            margin: 14px 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0057b8 0%, var(--primary-dark) 100%);
+            color: #fff;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 14px 24px;
+            margin-top: 4px;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 9px;
+            transition: opacity 0.2s, transform 0.1s;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 14px rgba(0,74,153,0.3);
+        }
+        .btn-primary:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+        .btn-primary:active:not(:disabled) { transform: translateY(0); }
+        .btn-primary:disabled { background: #a0b4cc; cursor: not-allowed; box-shadow: none; }
+
+        .status {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 8px;
+            background: #f3f6f9;
+            color: var(--muted);
+            border: 1px solid #e3e8ee;
+            font-weight: 700;
+        }
+        .status.success { color: var(--success); background: #edf8f0; border-color: #cfe8d7; }
+        .status.error   { color: var(--error);   background: #fdeeee; border-color: #f2caca; }
+        .status.warn    { color: var(--warn);     background: #fff6e8; border-color: #f1dec0; }
+
+        #page2 {
+            padding: 0 !important;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - var(--header-h, 160px));
+            min-height: unset;
+            border-radius: 0;
+            box-shadow: none;
+            background: #fff;
+        }
+
+        .graph-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 14px;
+            background: #fff;
+            border-bottom: 1px solid #e5e9ef;
+            flex-shrink: 0;
+            gap: 10px;
+        }
+        .btn-fullscreen {
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            border: 1px solid #c9d3dd;
+            background: #fff;
+            font-weight: bold;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+        }
+        .btn-fullscreen:hover { background: #eef2f6; }
+        #page2:fullscreen,
+        #page2:-webkit-full-screen {
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #page2:fullscreen #speedChartContainer,
+        #page2:-webkit-full-screen #speedChartContainer {
+            flex: 1 1 0;
+            min-height: 0;
+        }
+
+        #speedChartContainer {
+            flex: 1 1 0;
+            min-height: 0;
+            position: relative;
+            background: #fff;
+            padding: 8px 8px 0 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #fff;
+            font-size: 15px;
+        }
+        th, td { border: 1px solid #dee2e6; padding: 12px; text-align: center; }
+        th { background: var(--primary); color: #fff; }
+        .pass { color: var(--success); font-weight: 700; }
+        .fail { color: var(--error);   font-weight: 700; }
+
+        #page3 { background: #f0f4f8; padding: 16px; }
+
+        .report-wrap {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border: 1px solid #bcc8d4;
+            border-radius: 4px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+
+        .report-letterhead {
+            padding: 14px 28px 12px;
+            border-bottom: 3px solid var(--primary-dark);
+        }
+        .rh-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .rh-org   { font-size: 13px; font-weight: 800; color: var(--primary-dark); }
+        .rh-branch{ font-size: 13px; font-weight: 800; color: var(--primary-dark); }
+        .rh-center{ text-align: center; flex: 1; padding: 0 20px; }
+        .rh-title {
+            font-size: 15px; font-weight: 900;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            color: var(--primary-dark); margin: 0 0 4px 0;
+        }
+        .rh-overall { font-size: 13px; font-weight: 700; color: var(--text); }
+
+        .report-body { padding: 14px 28px 24px; }
+
+        .report-section-heading {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--primary-dark);
+            padding-bottom: 3px;
+            margin: 18px 0 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+        .report-table th {
+            background: var(--primary-dark);
+            color: #fff;
+            padding: 8px 10px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid #3a5a8a;
+            letter-spacing: 0.2px;
+        }
+        .report-table td {
+            border: 1px solid #b0bec5;
+            padding: 7px 10px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .report-table tr:nth-child(even) td { background: #f5f8fb; }
+        .report-table .danger { color: var(--error); font-weight: 700; }
+        .report-table .warn   { color: var(--warn);  font-weight: 700; }
+        .report-table .spd-high   { color: var(--error);   font-weight: 700; }
+        .report-table .spd-medium { color: var(--warn);    font-weight: 700; }
+        .report-table .spd-low    { color: var(--success); font-weight: 700; }
+        .report-table .no-gps     { color: #aaa; font-style: italic; font-size: 11px; }
+        .report-table td.td-label {
+            font-weight: 700; text-align: left;
+            padding-left: 12px; background: #f0f4f8;
+        }
+        .report-table td.td-result-pass { font-weight: 900; color: var(--success); font-size: 14px; }
+        .report-table td.td-result-fail { font-weight: 900; color: var(--error);   font-size: 14px; }
+
+        .backtrack-note {
+            font-size: 11px; color: #7a8fa6; margin-bottom: 6px; font-style: italic;
+        }
+
+        .report-signature {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 28px;
+            padding-top: 12px;
+            border-top: 1.5px solid #b0bec5;
+            font-size: 13px;
+        }
+        .sig-date  { color: var(--text); font-weight: 600; }
+        .sig-right { text-align: right; }
+        .sig-name  { font-weight: 700; font-size: 13px; margin-top: 2px; }
+        .sig-label { font-size: 11px; color: #5f6c7b; }
+
+        /* Export status toast */
+        #exportToast {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1f2933;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 9999;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            transition: opacity 0.3s;
+        }
+        #exportToast.success { background: var(--success); }
+        #exportToast.error   { background: var(--error); }
+
+        /* Print graph container — hidden on screen, shown only when printing */
+        #print-graph-container {
+            display: none;
+            width: 100%;
+            margin: 0 0 0 0;
+            padding: 0;
+        }
+        #print-graph-container .pg-heading {
+            font-size: 13px;
+            font-weight: 800;
+            color: #003366;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 3px;
+            margin: 18px 0 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        #print-graph-container img {
+            width: 100%;
+            height: auto;
+            border: 1px solid #b0bec5;
+            border-radius: 4px;
+            display: block;
+        }
+
+        @media print {
+            .app-header, .tabs, #status, #btnPlot, .btn-print,
+            .no-print, .page-section:not(#page3) { display: none !important; }
+            #page3 { display: block !important; background: #fff; padding: 0; }
+            .main-container { margin: 0; padding: 0; max-width: 100%; }
+            .report-wrap { box-shadow: none; border: none; border-radius: 0; }
+
+            /* Show the graph image when printing */
+            #print-graph-container { display: block !important; }
+
+            .report-section-heading {
+                break-after: avoid;
+                page-break-after: avoid;
+            }
+            .report-section-heading + *,
+            .report-section-heading + table,
+            .report-section-heading + p {
+                break-before: avoid;
+                page-break-before: avoid;
+            }
+            .brake-card,
+            .brake-result-grid,
+            .report-crew,
+            .report-stats,
+            .backtrack-note,
+            .report-info-grid,
+            .report-signature {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            #print-graph-container {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            thead { break-inside: avoid; page-break-inside: avoid; }
+            tr    { break-inside: avoid; page-break-inside: avoid; }
+
+            /* Strip box styles for output print generation */
+            .report-input-remark {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                font-size: 12px !important;
+                outline: none !important;
+            }
+
+            /* Ensures that if no entry is typed, the placeholder text remains completely blank when printed */
+            .report-input-remark::placeholder {
+                color: transparent !important;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .report-info-grid, .report-stats { grid-template-columns: 1fr 1fr; }
+            .brake-result-grid, .report-crew { grid-template-columns: 1fr; }
+            .report-signature { grid-template-columns: 1fr; }
+            .grid-train-row1, .grid-train-row2, .grid-crew, .grid-analysis, .report-grid-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="exportToast"></div>
+
+    <header class="app-header">
+        <div class="official-titles">
+            <div class="title-row">
+                <span class="t-main">Central Railway</span>
+                <span class="t-sep">|</span>
+                <span class="t-left">Bhusawal Division</span>
+                <span class="t-sep">|</span>
+                <span class="t-right">Electrical (TRO) Branch</span>
+            </div>
+            <h4>Speed Analysis Using RTIS Data</h4>
+        </div>
+        <div id="status" class="header-status">Load a CSV file to begin.</div>
+        <div class="tabs">
+            <button class="tab-btn active" data-target="page1">1. Data Entry</button>
+            <button class="tab-btn" data-target="page2">2. Graph Display</button>
+            <button class="tab-btn" data-target="page3">3. Report Display</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+
+        <section id="page1" class="page-section active">
+
+            <div class="form-card">
+                <div class="form-section-title">
+                    <span class="section-icon">🚂</span>
+                    Train Details
+                </div>
+                <div class="grid-train-row1">
+                    <div class="input-item">
+                        <label for="csvFile">📂 RTIS Data File</label>
+                        <input type="file" id="csvFile" accept=".csv">
+                    </div>
+                    <div class="input-item">
+                        <label for="trainNo">🔢 Train No</label>
+                        <input type="text" id="trainNo" placeholder="e.g. 12345">
+                    </div>
+                    <div class="input-item">
+                        <label for="journeyDate">📅 Journey Date</label>
+                        <input type="date" id="journeyDate">
+                    </div>
+                    <div class="input-item">
+                        <label for="trainType">🏷️ Train Type</label>
+                        <select id="trainType">
+                            <option value="">-- Select --</option>
+                            <option value="M/Exp">M/Exp</option>
+                            <option value="Goods">Goods</option>
+                            <option value="Pass">Pass</option>
+                            <option value="MEMU">MEMU</option>
+                        </select>
+                    </div>
+                    <div class="input-item">
+                        <label for="maxSpeed">⚡ Max Speed (km/h)</label>
+                        <input type="number" id="maxSpeed" placeholder="km/h" min="1" max="200">
+                    </div>
+                    <div class="input-item">
+                        <label for="trainDirection">🧭 Direction</label>
+                        <select id="trainDirection">
+                            <option value="">-- Select --</option>
+                            <option value="IGP_BSL">IGP → BSL</option>
+                            <option value="BSL_IGP">BSL → IGP</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-train-row2">
+                    <div class="input-item">
+                        <label for="startStation">🟢 Start Station</label>
+                        <select id="startStation"><option value="">-- Load CSV First --</option></select>
+                    </div>
+                    <div class="input-item">
+                        <label for="endStation">🔴 End Station</label>
+                        <select id="endStation"><option value="">-- Load CSV First --</option></select>
+                    </div>
+                    <div></div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <div class="form-section-title">
+                    <span class="section-icon">👷</span>
+                    Crew Details
+                </div>
+                <span class="crew-role-badge badge-lp">🚆 Loco Pilot (LP)</span>
+                <div class="grid-crew">
+                    <div class="input-item">
+                        <label for="lpIdSelect">LP ID</label>
+                        <select id="lpIdSelect"><option value="">-- ID --</option></select>
+                    </div>
+                    <div class="input-item">
+                        <label for="lpNameSelect">LP Name</label>
+                        <select id="lpNameSelect"><option value="">-- Name --</option></select>
+                    </div>
+                    <div class="input-item">
+                        <label>HQ</label>
+                        <input type="text" id="lpHq" class="readonly-field" readonly placeholder="Auto">
+                    </div>
+                    <div class="input-item">
+                        <label>Nominated CLI</label>
+                        <input type="text" id="lpCli" class="readonly-field" readonly placeholder="Auto">
+                    </div>
+                </div>
+                <hr class="crew-divider">
+                <span class="crew-role-badge badge-alp">🔧 Asst. Loco Pilot (ALP)</span>
+                <div class="grid-crew">
+                    <div class="input-item">
+                        <label for="alpIdSelect">ALP ID</label>
+                        <select id="alpIdSelect"><option value="">-- ID --</option></select>
+                    </div>
+                    <div class="input-item">
+                        <label for="alpNameSelect">ALP Name</label>
+                        <select id="alpNameSelect"><option value="">-- Name --</option></select>
+                    </div>
+                    <div class="input-item">
+                        <label>HQ</label>
+                        <input type="text" id="alpHq" class="readonly-field" readonly placeholder="Auto">
+                    </div>
+                    <div class="input-item">
+                        <label>Nominated CLI</label>
+                        <input type="text" id="alpCli" class="readonly-field" readonly placeholder="Auto">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <div class="form-section-title">
+                    <span class="section-icon">📊</span>
+                    Analysis Details
+                </div>
+                <div class="grid-analysis">
+                    <div class="input-item">
+                        <label for="analyzedBy">👤 Analyzed by – CLI Name</label>
+                        <select id="analyzedBy"><option value="">-- Select CLI --</option></select>
+                    </div>
+                    <div class="input-item">
+                        <label for="analysisHq">🏢 HQ</label>
+                        <input type="text" id="analysisHq" placeholder="Enter HQ">
+                    </div>
+                    <div class="input-item">
+                        <label for="analysisDate">📅 Analysis Date</label>
+                        <input type="date" id="analysisDate">
+                    </div>
+                </div>
+            </div>
+
+            <button id="btnPlot" class="btn-primary" type="button">⚙️ &nbsp;Process Data &amp; View Graph &nbsp;&rarr;</button>
+        </section>
+
+        <section id="page2" class="page-section">
+            <div class="graph-toolbar">
+                <h3 style="margin:0; color:var(--primary); font-size:15px;">Speed &amp; Braking Profile</h3>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button id="btnFullscreen" class="btn-fullscreen" title="Toggle Fullscreen">⛶ Full Screen</button>
+                    <button class="btn-goto-report" style="padding:6px 13px; cursor:pointer; border-radius:6px; border:1px solid #c9d3dd; background:#fff; font-weight:bold; font-size:13px;">View Report &rarr;</button>
+                </div>
+            </div>
+            <div id="speedChartContainer">
+                <canvas id="speedChart"></canvas>
+            </div>
+        </section>
+
+        <section id="page3" class="page-section">
+            <div id="testAnalysisResults">
+                <p style="color:var(--muted); text-align:center; margin-top:50px;">Run an analysis to generate the report.</p>
+            </div>
+        </section>
+    </div>
+
+    <script src="crew_mast.js"></script>
+    <script src="psr_igp_bsl.js"></script>
+    <script src="psr_bsl_igp.js"></script>
+
+    <script>
+    // ─────────────────────────────────────────────
+    // PSR DATA HELPERS
+    // ─────────────────────────────────────────────
+    function getPsrInRange(fromKm, toKm) {
+        if (!window._activePsrData) return [];
+        return window._activePsrData.filter(p => p.startKm < toKm && p.endKm > fromKm);
+    }
+
+    // ─────────────────────────────────────────────
+    // GOOGLE SHEET EXPORT
+    // ─────────────────────────────────────────────
+    window._lastCompiledPayload = null;
+
+    function showToast(msg, type = "", duration = 3500) {
+        const toast = document.getElementById("exportToast");
+        toast.textContent = msg;
+        toast.className = type;
+        toast.style.display = "block";
+        toast.style.opacity = "1";
+        clearTimeout(toast._hideTimer);
+        toast._hideTimer = setTimeout(() => {
+            toast.style.opacity = "0";
+            setTimeout(() => { toast.style.display = "none"; }, 350);
+        }, duration);
+    }
+
+    function exportToGoogleSheet() {
+        if (!window._lastCompiledPayload) {
+            showToast("⚠️ No processed data. Run analysis first.", "error");
+            return;
+        }
+
+        const btn = document.getElementById("btnExportSheet");
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = "⏳ Exporting...";
+
+        // Google Apps Script Web App deployment URL
+        const targetUrl = "https://script.google.com/macros/s/AKfycby3dNfNks4uhuGCW9hUcWiT50jk0QX2oyZBs12JdbONiUxna2ZClVXN5G8nx0K1Yz35EA/exec";
+
+        fetch(targetUrl, {
+            method: "POST",
+            mode: "no-cors",  // Required when running from file:// or cross-origin without CORS headers
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(window._lastCompiledPayload)
+        })
+        .then(() => {
+            // no-cors always resolves — treat as success
+            showToast("✅ Data pushed to Google Sheet!", "success");
+            btn.innerHTML = "✅ Exported";
+            btn.style.background = "var(--success)";
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = "";
+                btn.disabled = false;
+            }, 3000);
+        })
+        .catch(err => {
+            console.error(err);
+            showToast("❌ Export failed: " + err.toString(), "error", 5000);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    }
+
+    function getPsrSpeedAt(km) {
+        if (!window._activePsrData) return null;
+        const matches = window._activePsrData.filter(p => km >= p.startKm && km <= p.endKm);
+        if (!matches.length) return null;
+        return Math.min(...matches.map(p => p.speed));
+    }
+
+    // ─────────────────────────────────────────────
+    // CONSTANTS
+    // ─────────────────────────────────────────────
+    const STOP_SPEED_THRESHOLD = 1.0;
+    const FEEL_TEST  = { minSpd: 10, maxSpd: 35, requiredDrop: 3 };
+    const POWER_TEST = { minSpd: 50, maxSpd: 80, requiredDrop: 7 };
+
+    const SPEED_TOLERANCE = 2;
+    const BACKTRACK_DISTANCES_M = [2500, 2000, 1500, 1000, 750, 500, 110, 20];
+
+    // ─────────────────────────────────────────────
+    // DOM REFERENCES
+    // ─────────────────────────────────────────────
+    const csvFileInput       = document.getElementById("csvFile");
+    const startStationSelect = document.getElementById("startStation");
+    const endStationSelect   = document.getElementById("endStation");
+    const plotButton         = document.getElementById("btnPlot");
+    const statusBox          = document.getElementById("status");
+    const resultsBox         = document.getElementById("testAnalysisResults");
+
+    // ─────────────────────────────────────────────
+    // STATE
+    // ─────────────────────────────────────────────
+    let allData = [];
+    let myChart = null;
+
+    function openPage(pageId) {
+        document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        const btn = document.querySelector(`.tab-btn[data-target="${pageId}"]`);
+        if (btn) btn.classList.add('active');
+
+        if (pageId === 'page2') {
+            document.body.classList.add('graph-active');
+            const headerH = document.querySelector('.app-header').offsetHeight;
+            document.documentElement.style.setProperty('--header-h', headerH + 'px');
+            setTimeout(() => { if (myChart) myChart.resize(); }, 50);
+        } else {
+            document.body.classList.remove('graph-active');
+        }
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => openPage(btn.dataset.target));
+    });
+
+    document.querySelector('.btn-goto-report').addEventListener('click', () => openPage('page3'));
+
+    document.getElementById('btnFullscreen').addEventListener('click', () => {
+        const el = document.getElementById('page2');
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+        } else {
+            (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        }
+    });
+
+    document.addEventListener('fullscreenchange', updateFullscreenBtn);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenBtn);
+    function updateFullscreenBtn() {
+        const btn = document.getElementById('btnFullscreen');
+        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        btn.textContent = isFs ? '✕ Exit Full Screen' : '⛶ Full Screen';
+        setTimeout(() => { if (myChart) myChart.resize(); }, 80);
+    }
+
+    window.addEventListener('resize', () => {
+        if (myChart) myChart.resize();
+    });
+
+    document.getElementById('analysisDate').valueAsDate = new Date();
+
+    function populateCrewDropdowns() {
+        if (typeof CREW_MASTER === 'undefined') {
+            setStatus("Notice: crew_mast.js not found. Crew dropdowns empty.", "warn");
+            return;
+        }
+
+        const lpIdSel   = document.getElementById("lpIdSelect");
+        const lpNameSel = document.getElementById("lpNameSelect");
+        const alpIdSel  = document.getElementById("alpIdSelect");
+        const alpNameSel= document.getElementById("alpNameSelect");
+        let cliSet      = new Set();
+
+        const sortedIds = Object.keys(CREW_MASTER).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+        for (const crewId of sortedIds) {
+            const c = CREW_MASTER[crewId];
+            if (c.cli) cliSet.add(c.cli);
+
+            const idOpt   = new Option(crewId, crewId);
+            const nameOpt = new Option(c.name, crewId);
+
+            if (c.type.toUpperCase().includes("ALP")) {
+                alpIdSel.add(idOpt.cloneNode(true));
+                alpNameSel.add(nameOpt.cloneNode(true));
+            } else if (c.type.toUpperCase().includes("LP")) {
+                lpIdSel.add(idOpt.cloneNode(true));
+                lpNameSel.add(nameOpt.cloneNode(true));
+            }
+        }
+
+        const analyzedBySel = document.getElementById("analyzedBy");
+        Array.from(cliSet).sort().forEach(cli => analyzedBySel.add(new Option(cli, cli)));
+    }
+
+    if (typeof CREW_MASTER !== 'undefined') {
+        populateCrewDropdowns();
+    } else {
+        console.warn("crew_mast.js not loaded - crew dropdowns will be empty");
+    }
+
+    function attachSyncListeners(type) {
+        const idSel   = document.getElementById(type + "IdSelect");
+        const nameSel = document.getElementById(type + "NameSelect");
+        const hqInp   = document.getElementById(type + "Hq");
+        const cliInp  = document.getElementById(type + "Cli");
+
+        function updateDetails(val) {
+            if (!val || typeof CREW_MASTER === 'undefined' || !CREW_MASTER[val]) {
+                hqInp.value = ""; cliInp.value = ""; return;
+            }
+            hqInp.value  = CREW_MASTER[val].hq;
+            cliInp.value = CREW_MASTER[val].cli;
+        }
+
+        idSel.addEventListener("change", e => { nameSel.value = e.target.value; updateDetails(e.target.value); });
+        nameSel.addEventListener("change", e => { idSel.value = e.target.value; updateDetails(e.target.value); });
+    }
+    attachSyncListeners('lp');
+    attachSyncListeners('alp');
+
+    function setStatus(message, type = "") {
+        statusBox.textContent = message;
+        statusBox.className   = "header-status" + (type ? ` ${type}` : "");
+    }
+
+    function resetUI() {
+        resultsBox.innerHTML = "<p style='color:var(--muted);text-align:center;margin-top:50px;'>Run an analysis to generate the report.</p>";
+        if (myChart) { myChart.destroy(); myChart = null; }
+    }
+
+    function formatTime(value) {
+        if (!value) return "-";
+        const parts = String(value).trim().split(/\s+/);
+        return parts.length > 1 ? parts[1] : parts[0];
+    }
+
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, ch =>
+            ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[ch])
+        );
+    }
+
+    let csvDelimiter = ",";
+
+    function detectDelimiter(headerLine) {
+        const tabs    = (headerLine.match(/\t/g)  || []).length;
+        const commas  = (headerLine.match(/,/g)   || []).length;
+        const semis   = (headerLine.match(/;/g)   || []).length;
+        if (tabs >= commas && tabs >= semis) return "\t";
+        if (semis > commas) return ";";
+        return ",";
+    }
+
+    function parseCsvLine(line, delimiter) {
+        const delim = delimiter || csvDelimiter;
+        if (delim !== ",") return line.split(delim).map(v => v.trim());
+        const result = [];
+        let current = "", inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i], next = line[i+1];
+            if (char === '"') {
+                if (inQuotes && next === '"') { current += '"'; i++; }
+                else { inQuotes = !inQuotes; }
+            } else if (char === ',' && !inQuotes) {
+                result.push(current); current = "";
+            } else { current += char; }
+        }
+        result.push(current);
+        return result.map(v => v.trim());
+    }
+
+    function buildStopInstances(data) {
+        const stops = [];
+        let inStop = false, stopStartIdx = -1;
+        for (let i = 0; i < data.length; i++) {
+            const atStop = isStopSpeed(data[i].speed) && data[i].stn;
+            if (atStop && !inStop) {
+                inStop = true; stopStartIdx = i;
+            } else if (!atStop && inStop) {
+                const midIdx = Math.floor((stopStartIdx + i - 1) / 2);
+                stops.push({ stn: data[stopStartIdx].stn, idx: stopStartIdx, time: formatTime(data[midIdx].time) });
+                inStop = false; stopStartIdx = -1;
+            }
+        }
+        if (inStop && stopStartIdx !== -1)
+            stops.push({ stn: data[stopStartIdx].stn, idx: stopStartIdx, time: formatTime(data[stopStartIdx].time) });
+        return stops;
+    }
+
+    function populateStationDropdowns(data) {
+        const stops = buildStopInstances(data);
+
+        if (!stops.length) {
+            const stationList = [...new Set(data.map(r => r.stn).filter(Boolean))].sort();
+            const opts = '<option value="">-- Select Station --</option>' +
+                stationList.map(s => `<option value="name:${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+            startStationSelect.innerHTML = opts;
+            endStationSelect.innerHTML   = opts;
+            return;
+        }
+
+        const count = {}, seen = {};
+        stops.forEach(s => { count[s.stn] = (count[s.stn] || 0) + 1; seen[s.stn] = 0; });
+
+        function makeOptions() {
+            Object.keys(seen).forEach(k => seen[k] = 0);
+            return '<option value="">-- Select Stop --</option>' +
+                stops.map(s => {
+                    seen[s.stn]++;
+                    const n = seen[s.stn];
+                    const ord = n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : n + 'th';
+                    const suffix = count[s.stn] > 1 ? ` [${ord} visit]` : '';
+                    const label  = `${s.stn}  @${s.time}${suffix}`;
+                    return `<option value="idx:${s.idx}">${escapeHtml(label)}</option>`;
+                }).join("");
+        }
+
+        startStationSelect.innerHTML = makeOptions();
+        endStationSelect.innerHTML   = makeOptions();
+    }
+
+    function isStopSpeed(speed) { return Number.isFinite(speed) && speed < STOP_SPEED_THRESHOLD; }
+
+    function haversineKm(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    window._activePsrData = undefined;
+    window._activePsrBbox = [];
+
+    function buildPsrBbox(data) {
+        if (!data || !data.length) return [];
+        return data.map(p => {
+            const midLat  = (p.strtLat + p.endLat) / 2;
+            const midLon  = (p.strtLon + p.endLon) / 2;
+            const halfLen = haversineKm(p.strtLat, p.strtLon, p.endLat, p.endLon) / 2;
+            const buf     = 0.20;
+            const degLat  = (halfLen + buf) / 111.0;
+            const degLon  = (halfLen + buf) / (111.0 * Math.cos(midLat * Math.PI / 180));
+            return {
+                minLat: midLat - degLat, maxLat: midLat + degLat,
+                minLon: midLon - degLon, maxLon: midLon + degLon,
+                midLat, midLon, radius: halfLen + buf
+            };
+        });
+    }
+
+    function pointInPsrZone(pLat, pLon, p, i) {
+        const bb = window._activePsrBbox[i];
+        if (pLat < bb.minLat || pLat > bb.maxLat ||
+            pLon < bb.minLon || pLon > bb.maxLon) return false;
+        return haversineKm(pLat, pLon, bb.midLat, bb.midLon) <= bb.radius;
+    }
+
+    function detectBrakeTest(data, minSpd, maxSpd, requiredDrop) {
+        for (let i = 0; i < data.length - 1; i++) {
+            const peakSpeed = data[i].speed;
+            if (peakSpeed < minSpd || peakSpeed > maxSpd) continue;
+
+            let bottomSpeed = peakSpeed, bottomIndex = i;
+
+            for (let j = i + 1; j < Math.min(i + 150, data.length); j++) {
+                const speed = data[j].speed;
+                if (speed < bottomSpeed) { bottomSpeed = speed; bottomIndex = j; continue; }
+                if (speed > bottomSpeed + 1.5) {
+                    let isSustained = true;
+                    const confirmationWindow = 3;
+                    for (let k = j + 1; k < Math.min(j + 1 + confirmationWindow, data.length); k++) {
+                        if (data[k].speed < bottomSpeed + 1.0) {
+                            isSustained = false;
+                            break;
+                        }
+                    }
+                    if (isSustained) {
+                        const drop = peakSpeed - bottomSpeed;
+                        if (drop >= requiredDrop) {
+                            return {
+                                peakIdx: i, bottomIdx: bottomIndex,
+                                peakSpd: peakSpeed, bottomSpd: bottomSpeed,
+                                drop: drop.toFixed(1),
+                                peakTime:   formatTime(data[i].time),
+                                bottomTime: formatTime(data[bottomIndex].time)
+                            };
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    function buildBacktrackTable(segment, startStnName) {
+        const rows = [];
+        const hasDist = segment.some(r => r.dist !== null && r.dist !== undefined);
+
+        const NOISE_TOLERANCE = 3;
+        const stops = [];
+        let inStop = false, stopStn = "", haltEntryIdx = -1;
+        let noiseCount = 0;
+        let lastHaltIdx = -1;
+
+        for (let i = 0; i < segment.length; i++) {
+            const row = segment[i];
+            const isHaltSpeed = isStopSpeed(row.speed);
+            const hasStn = !!row.stn;
+
+            if (!inStop) {
+                if (isHaltSpeed && hasStn) {
+                    inStop = true;
+                    stopStn = row.stn;
+                    haltEntryIdx = i;
+                    lastHaltIdx  = i;
+                    noiseCount = 0;
+                }
+            } else {
+                if (isHaltSpeed) {
+                    noiseCount = 0;
+                    lastHaltIdx = i;
+                } else {
+                    noiseCount++;
+                    if (noiseCount >= NOISE_TOLERANCE) {
+                        const departureIdx = lastHaltIdx + 1;
+                        stops.push({ stn: stopStn, haltEntryIdx, lastHaltIdx, departureIdx });
+                        inStop = false;
+                        stopStn = "";
+                        haltEntryIdx = -1;
+                        lastHaltIdx  = -1;
+                        noiseCount = 0;
+                    }
+                }
+            }
+        }
+        if (inStop && haltEntryIdx !== -1) {
+            stops.push({ stn: stopStn, haltEntryIdx, lastHaltIdx, departureIdx: -1 });
+        }
+
+        stops.forEach(stopInfo => {
+            if (stopInfo.stn &&
+                startStnName &&
+                stopInfo.stn.trim().toUpperCase() === startStnName.trim().toUpperCase()) {
+                return;
+            }
+
+            const anchorIdx = stopInfo.haltEntryIdx;
+            const anchorRow = segment[anchorIdx];
+            const distanceSpeeds = {};
+
+            if (!hasDist) {
+                BACKTRACK_DISTANCES_M.forEach(d => { distanceSpeeds[d] = null; });
+            } else {
+                BACKTRACK_DISTANCES_M.forEach(targetM => {
+                    let cumDist = 0;
+                    let found = null;
+                    let prevSpeed = null;
+
+                    for (let j = anchorIdx - 1; j >= 0; j--) {
+                        const rowJ  = segment[j];
+                        const rowJ1 = segment[j + 1];
+
+                        if (rowJ.speed < STOP_SPEED_THRESHOLD) {
+                            prevSpeed = null;
+                            continue;
+                        }
+
+                        const stepDist = (rowJ1.dist !== null && rowJ1.dist !== undefined) ? rowJ1.dist : 0;
+                        const prevCum = cumDist;
+                        cumDist += stepDist;
+
+                        if (cumDist >= targetM) {
+                            const diffJ    = Math.abs(cumDist  - targetM);
+                            const diffJ1   = Math.abs(prevCum  - targetM);
+                            if (diffJ <= diffJ1) {
+                                found = rowJ.speed;
+                            } else {
+                                found = prevSpeed !== null ? prevSpeed : rowJ1.speed;
+                            }
+                            break;
+                        }
+                        prevSpeed = rowJ.speed;
+                    }
+                    distanceSpeeds[targetM] = found;
+                });
+            }
+
+            const departureTime = stopInfo.departureIdx !== -1
+                ? formatTime(segment[stopInfo.departureIdx].time)
+                : "-";
+
+            rows.push({
+                stn:          stopInfo.stn,
+                arrivalTime:  formatTime(anchorRow.time),
+                departureTime,
+                distanceSpeeds,
+                hasDist
+            });
+        });
+
+        return rows;
+    }
+
+    function decimateData(data, feel, power, psrZones, maxPoints = 1500) {
+        if (data.length <= maxPoints) {
+            return { optimizedData: data, mapIndex: (i) => i };
+        }
+
+        const factor = Math.ceil(data.length / maxPoints);
+        const optimizedData = [];
+        const oldToNewIndex = new Map();
+        const mustKeep = new Set();
+
+        mustKeep.add(0);
+        mustKeep.add(data.length - 1);
+
+        if (feel) { mustKeep.add(feel.peakIdx); mustKeep.add(feel.bottomIdx); }
+        if (power) { mustKeep.add(power.peakIdx); mustKeep.add(power.bottomIdx); }
+
+        psrZones.forEach(z => { mustKeep.add(z.startIdx); mustKeep.add(z.endIdx); });
+
+        let lastStn = "";
+        data.forEach((item, index) => {
+            if (item.stn && item.stn !== lastStn) {
+                mustKeep.add(index);
+                lastStn = item.stn;
+            }
+        });
+
+        for (let i = 0; i < data.length; i++) {
+            if (i % factor === 0 || mustKeep.has(i)) {
+                oldToNewIndex.set(i, optimizedData.length);
+                optimizedData.push(data[i]);
+            }
+        }
+
+        const mapIndex = (oldIdx) => {
+            if (oldToNewIndex.has(oldIdx)) return oldToNewIndex.get(oldIdx);
+            let lower = oldIdx, upper = oldIdx;
+            while (lower >= 0 || upper < data.length) {
+                if (oldToNewIndex.has(lower)) return oldToNewIndex.get(lower);
+                if (oldToNewIndex.has(upper)) return oldToNewIndex.get(upper);
+                lower--; upper++;
+            }
+            return 0;
+        };
+
+        return { optimizedData, mapIndex };
+    }
+
+    function gatherFormData() {
+        const lpId  = document.getElementById("lpIdSelect").value;
+        const alpId = document.getElementById("alpIdSelect").value;
+
+        let lpInfo = "Not Selected", alpInfo = "Not Selected";
+        if (lpId && typeof CREW_MASTER === 'undefined' && CREW_MASTER[lpId]) {
+            const c = CREW_MASTER[lpId];
+            lpInfo = `${lpId}, ${c.name}, ${c.type}, ${c.hq}, Nominated CLI: ${c.cli}`;
+        }
+        if (alpId && typeof CREW_MASTER === 'undefined' && CREW_MASTER[alpId]) {
+            const c = CREW_MASTER[alpId];
+            alpInfo = `${alpId}, ${c.name}, ${c.type}, ${c.hq}, Nominated CLI: ${c.cli}`;
+        }
+
+        const dirVal = document.getElementById("trainDirection").value;
+        const dirLabel = dirVal === "IGP_BSL" ? "IGP → BSL" : dirVal === "BSL_IGP" ? "BSL → IGP" : "-";
+        return {
+            trainNo:   document.getElementById("trainNo").value    || "-",
+            jDate:     document.getElementById("journeyDate").value || "-",
+            tType:     document.getElementById("trainType").value   || "-",
+            mSpeed:    document.getElementById("maxSpeed").value ? document.getElementById("maxSpeed").value + " km/h" : "-",
+            direction: dirLabel,
+            startStn:  (startStationSelect.options[startStationSelect.selectedIndex]?.text || "-").split('@')[0].replace(/\[.*?\]/g,"").trim(),
+            endStn:    (endStationSelect.options[endStationSelect.selectedIndex]?.text || "-").split('@')[0].replace(/\[.*?\]/g,"").trim(),
+            lpInfo,
+            alpInfo,
+            aCli:  document.getElementById("analyzedBy").value   || "-",
+            aHq:   document.getElementById("analysisHq").value   || "-",
+            aDate: document.getElementById("analysisDate").value  || "-"
+        };
+    }
+
+    function renderReport(fd, feel, power, segment) {
+        let maxRecorded = "-";
+        if (segment) {
+            let mx = 0;
+            segment.forEach(r => { if (r.speed > 2 && r.speed > mx) mx = r.speed; });
+            if (mx > 0) maxRecorded = mx.toFixed(1);
+        }
+        const permSpeed   = parseFloat(fd.mSpeed) || null;
+        const overspeedThreshold = permSpeed ? permSpeed + SPEED_TOLERANCE : null;
+
+        let maxOverspeed = 0;
+        if (overspeedThreshold && segment) {
+            segment.forEach(r => {
+                if (r.speed > overspeedThreshold && (r.speed - permSpeed) > maxOverspeed)
+                    maxOverspeed = r.speed - permSpeed;
+            });
+            maxOverspeed = maxOverspeed > 0 ? maxOverspeed.toFixed(1) : 0;
+        }
+
+        let duration = "-";
+        if (segment && segment.length > 1) {
+            const t1 = segment[0].time, t2 = segment[segment.length - 1].time;
+            const parse = t => {
+                const parts = t.split(":");
+                return parts.length >= 2 ? parseInt(parts[0]) * 60 + parseInt(parts[1]) : 0;
+            };
+            const diff = parse(formatTime(t2)) - parse(formatTime(t1));
+            if (diff > 0) duration = `${Math.floor(diff / 60)}h ${diff % 60}m`;
+            else duration = "-";
+        }
+
+        // ── PSR Violations ──
+        const psrViolations = [];
+        if (segment) {
+            let vStart = null, vSpeed = null, vPsr = null, vSub = "";
+            segment.forEach((row, i) => {
+                const isPsrViol = row.psr !== null && row.speed > (row.psr + SPEED_TOLERANCE);
+                if (isPsrViol && !vStart) {
+                    vStart = row; vSpeed = row.speed; vPsr = row.psr;
+                    vSub = row.psrEntries && row.psrEntries[0] ? row.psrEntries[0].subSection : "-";
+                } else if (isPsrViol && row.speed > vSpeed) {
+                    vSpeed = row.speed;
+                } else if (!isPsrViol && vStart) {
+                    psrViolations.push({
+                        time: formatTime(vStart.time), subSection: vSub,
+                        psrLimit: vPsr, maxSpeed: vSpeed,
+                        exceed: (vSpeed - vPsr).toFixed(1)
+                    });
+                    vStart = null;
+                }
+            });
+            if (vStart) psrViolations.push({
+                time: formatTime(vStart.time), subSection: vSub,
+                psrLimit: vPsr, maxSpeed: vSpeed,
+                exceed: (vSpeed - vPsr).toFixed(1)
+            });
+        }
+
+        // ── Overspeed Events ──
+        const overspeedEvents = [];
+        if (segment && overspeedThreshold) {
+            let evStart = null, evMax = 0;
+            segment.forEach(row => {
+                if (row.speed > overspeedThreshold && !evStart) {
+                    evStart = row; evMax = row.speed;
+                } else if (row.speed > overspeedThreshold && row.speed > evMax) {
+                    evMax = row.speed;
+                } else if (row.speed <= overspeedThreshold && evStart) {
+                    overspeedEvents.push({
+                        time: formatTime(evStart.time),
+                        stn:  evStart.stn || "-",
+                        maxSpeed: evMax.toFixed(1),
+                        exceed: (evMax - permSpeed).toFixed(1)
+                    });
+                    evStart = null; evMax = 0;
+                }
+            });
+            if (evStart) {
+                overspeedEvents.push({
+                    time: formatTime(evStart.time),
+                    stn:  evStart.stn || "-",
+                    maxSpeed: evMax.toFixed(1),
+                    exceed: (evMax - permSpeed).toFixed(1)
+                });
+            }
+        }
+
+        // ── Backtrack / Approach Speed ──
+        const backtrackRows = buildBacktrackTable(segment, fd.startStn);
+
+        let backtrackHtml = "";
+        const irregularities = [];
+
+        if (backtrackRows.length > 0) {
+            const hasAnyDist = backtrackRows.some(r => r.hasDist);
+
+            function cellClass(d, spd) {
+                if (spd === null || spd === undefined) return "";
+                if (d === 1000 && spd > 40) return "spd-high";
+                if (d === 110  && spd > 20) return "spd-high";
+                if (d === 20   && spd > 10) return "spd-high";
+                return "spd-low";
+            }
+
+            const colHeaders = BACKTRACK_DISTANCES_M.map(d =>
+                `<th>${d >= 1000 ? (d/1000) + ' km' : d + ' m'}</th>`
+            ).join("");
+
+            const tableRows = backtrackRows.map(r => {
+                const distCells = BACKTRACK_DISTANCES_M.map(d => {
+                    const spd = r.distanceSpeeds[d];
+                    if (spd === null || spd === undefined) {
+                        return `<td><span class="no-gps">N/A</span></td>`;
+                    }
+                    const cls = cellClass(d, spd);
+                    return `<td class="${cls}">${spd.toFixed(1)}</td>`;
+                }).join("");
+                return `<tr>
+                    <td style="font-weight:700;">${escapeHtml(r.stn)}</td>
+                    <td>${escapeHtml(r.arrivalTime)}</td>
+                    <td>${escapeHtml(r.departureTime)}</td>
+                    ${distCells}
+                </tr>`;
+            }).join("");
+
+            backtrackRows.forEach(r => {
+                BACKTRACK_DISTANCES_M.forEach(d => {
+                    const spd = r.distanceSpeeds[d];
+                    if (spd === null || spd === undefined) return;
+                    let limit = null, label = "";
+                    if (d === 1000 && spd > 40) { limit = 40; label = "1000 m"; }
+                    if (d === 110  && spd > 20) { limit = 20; label = "110 m";  }
+                    if (d === 20   && spd > 10) { limit = 10; label = "20 m";   }
+                    if (limit !== null) {
+                        irregularities.push({
+                            stn:    r.stn,
+                            time:   r.arrivalTime,
+                            dist:   label,
+                            limit,
+                            actual: spd.toFixed(1),
+                            excess: (spd - limit).toFixed(1)
+                        });
+                    }
+                });
+            });
+
+            const irregHtml = irregularities.length > 0 ? `
+                <div class="report-section-heading" style="color:var(--error);">
+                    🚨 Approach Speed Irregularities
+                </div>
+                <table class="report-table">
+                    <thead><tr>
+                        <th>#</th>
+                        <th>Station</th>
+                        <th>Arrival Time</th>
+                        <th>Distance Before Stop</th>
+                        <th>Speed Limit</th>
+                        <th>Actual Speed</th>
+                        <th>Exceeded By</th>
+                        <th class="remark-col" style="width: 250px;">Remarks / Action Taken</th>
+                    </tr></thead>
+                    <tbody>
+                        ${irregularities.map((v, i) => `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td style="font-weight:700;">${escapeHtml(v.stn)}</td>
+                            <td>${escapeHtml(v.time)}</td>
+                            <td>${escapeHtml(v.dist)}</td>
+                            <td class="warn">${v.limit} km/h</td>
+                            <td class="danger">${v.actual} km/h</td>
+                            <td class="danger">+${v.excess} km/h</td>
+                            <td class="remark-col" style="padding: 2px;">
+                                <input type="text" class="report-input-remark" 
+                                       placeholder="Enter counseling details..." 
+                                       style="width: 100%; box-sizing: border-box; border: 1px solid #ccd6e0; padding: 6px; font-size: 12px; font-family: inherit; border-radius: 4px;">
+                            </td>
+                        </tr>`).join("")}
+                    </tbody>
+                </table>` : `
+                <div class="report-section-heading" style="color:var(--success);">
+                    ✅ No Approach Speed Irregularities
+                </div>
+                <p style="color:var(--success);font-weight:700;font-size:13px;padding:4px 0 10px;">
+                    All approach speeds within limits at 1000 m, 110 m and 20 m checkpoints.
+                </p>`;
+
+            backtrackHtml = `
+                <div class="report-section-heading">📏 Approach Speed Before Stop (km/h)</div>
+                <p class="backtrack-note">
+                    Arrival = first row speed &lt; 1 km/h &nbsp;|&nbsp; Departure = first row speed ≥ 1 km/h after halt.
+                    Starting station excluded.
+                    ${!hasAnyDist ? '⚠️ distFromSpeed column not found in CSV — all distances shown as N/A.' : ''}
+                    <br>🔴 Red cells: speed &gt; 40 km/h at 1000 m &nbsp;|&nbsp; speed &gt; 20 km/h at 110 m &nbsp;|&nbsp; speed &gt; 10 km/h at 20 m.
+                </p>
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Station</th>
+                            <th>Arrival Time</th>
+                            <th>Departure Time</th>
+                            ${colHeaders}
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                ${irregHtml}`;
+        }
+
+        const parseCrew = info => {
+            if (!info || info === "Not Selected") return null;
+            const parts = info.split(",").map(s => s.trim());
+            return { id: parts[0], name: parts[1], type: parts[2], hq: parts[3], cli: parts[4] ? parts[4].replace("Nominated CLI:", "").trim() : "-" };
+        };
+        const lp  = parseCrew(fd.lpInfo);
+        const alp = parseCrew(fd.alpInfo);
+
+        const psrTableHtml = psrViolations.length ? `
+            <div class="report-section-heading">⚠️ PSR Violations <span style="font-size:10px;font-weight:500;color:#b26a00;">(tolerance +${SPEED_TOLERANCE} km/h applied)</span></div>
+            <table class="report-table">
+                <thead><tr>
+                    <th>#</th><th>Time</th><th>Sub Section</th>
+                    <th>PSR Limit</th><th>Max Speed</th><th>Exceeded By</th>
+                </tr></thead>
+                <tbody>
+                    ${psrViolations.map((v, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${escapeHtml(v.time)}</td>
+                        <td>${escapeHtml(v.subSection)}</td>
+                        <td class="warn">${v.psrLimit} km/h</td>
+                        <td class="danger">${v.maxSpeed.toFixed ? v.maxSpeed.toFixed(1) : v.maxSpeed} km/h</td>
+                        <td class="danger">+${v.exceed} km/h</td>
+                    </tr>`).join("")}
+                </tbody>
+            </table>` : (window._activePsrData
+                ? `<div class="report-section-heading">✅ PSR Compliance <span style="font-size:10px;font-weight:500;color:#1b8a3d;">(tolerance +${SPEED_TOLERANCE} km/h applied)</span></div>
+                   <p style="color:var(--success);font-weight:700;font-size:13px;padding:8px 0;">
+                   No PSR violations detected in this section.</p>` : "");
+
+        const overspeedTableHtml = overspeedEvents.length ? `
+            <div class="report-section-heading">🚨 Overspeed Instances <span style="font-size:10px;font-weight:500;color:#b26a00;">(above ${permSpeed} km/h + ${SPEED_TOLERANCE} km/h tolerance)</span></div>
+            <table class="report-table">
+                <thead><tr>
+                    <th>#</th><th>Time</th><th>Station</th>
+                    <th>Max Speed</th><th>Exceeded By</th>
+                </tr></thead>
+                <tbody>
+                    ${overspeedEvents.map((e, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${escapeHtml(e.time)}</td>
+                        <td>${escapeHtml(e.stn)}</td>
+                        <td class="danger">${e.maxSpeed} km/h</td>
+                        <td class="danger">+${e.exceed} km/h</td>
+                    </tr>`).join("")}
+                </tbody>
+            </table>` : "";
+
+        const overallPass = feel && power && overspeedEvents.length === 0 && psrViolations.length === 0;
+        const overallPartial = (feel || power) && (overspeedEvents.length > 0 || psrViolations.length > 0);
+        const overallColor = overallPass ? "var(--success)" : overallPartial ? "var(--warn)" : "var(--error)";
+        const overallText  = overallPass ? "SATISFACTORY" : overallPartial ? "OBSERVATIONS NOTED" : "UNSATISFACTORY";
+
+        // ─────────────────────────────────────────────
+        // FULL COMPILED PAYLOAD — ALL TABS
+        // ─────────────────────────────────────────────
+        window._lastCompiledPayload = {
+
+            // TAB 1: Daily Record (summary row)
+            dailyRecord: {
+                trainNo:                fd.trainNo,
+                journeyDate:            fd.jDate,
+                section:                `${fd.startStn} → ${fd.endStn}`,
+                direction:              fd.direction,
+                trainType:              fd.tType,
+                permittedSpeed:         fd.mSpeed,
+                lp_id:                  lp ? lp.id   : "-",
+                lp_name:                lp ? lp.name : "-",
+                alp_id:                 alp ? alp.id   : "-",
+                alp_name:               alp ? alp.name : "-",
+                maxRecordedSpeed:       maxRecorded,
+                duration:               duration,
+                overspeedEventCount:    overspeedEvents.length,
+                psrViolationCount:      psrViolations.length,
+                approachIrregCount:      irregularities.length,
+                brakeFeel:              feel  ? 'PASS' : 'FAIL',
+                brakePower:             power ? 'PASS' : 'FAIL',
+                overallResult:          overallText,
+                cli_name:               fd.aCli,
+                cli_hq:                 fd.aHq,
+                analysisDate:           fd.aDate
+            },
+
+            // TAB 2: Approach Speed Irregularities (one row per checkpoint breach)
+            irregularities: irregularities.map(v => ({
+                trainNo:        fd.trainNo,
+                journeyDate:    fd.jDate,
+                lp_id:          lp ? lp.id   : "-",
+                lp_name:        lp ? lp.name : "-",
+                station:        v.stn,
+                arrivalTime:    v.time,
+                checkpoint:     v.dist,
+                speedLimit:     v.limit,
+                actualSpeed:    v.actual,
+                exceededBy:     v.excess,
+                cli_name:       fd.aCli,
+                analysisDate:   fd.aDate
+            })),
+
+            // TAB 3: Overspeed Events (one row per event — previously missing)
+            overspeedEvents: overspeedEvents.map(e => ({
+                trainNo:        fd.trainNo,
+                journeyDate:    fd.jDate,
+                lp_id:          lp ? lp.id   : "-",
+                lp_name:        lp ? lp.name : "-",
+                time:           e.time,
+                station:        e.stn,
+                maxSpeed:       e.maxSpeed,
+                exceededBy:     e.exceed,
+                permittedSpeed: fd.mSpeed,
+                cli_name:       fd.aCli,
+                analysisDate:   fd.aDate
+            })),
+
+            // TAB 4: PSR Violations (one row per violation — previously missing)
+            psrViolations: psrViolations.map(v => ({
+                trainNo:        fd.trainNo,
+                journeyDate:    fd.jDate,
+                lp_id:          lp ? lp.id   : "-",
+                lp_name:        lp ? lp.name : "-",
+                time:           v.time,
+                subSection:     v.subSection,
+                psrLimit:       v.psrLimit,
+                maxSpeed:       parseFloat(v.maxSpeed).toFixed ? parseFloat(v.maxSpeed).toFixed(1) : v.maxSpeed,
+                exceededBy:     v.exceed,
+                cli_name:       fd.aCli,
+                analysisDate:   fd.aDate
+            })),
+
+            // TAB 5: Brake Test Details (full numbers — previously only PASS/FAIL)
+            brakeTests: {
+                trainNo:            fd.trainNo,
+                journeyDate:        fd.jDate,
+                lp_id:              lp ? lp.id   : "-",
+                lp_name:            lp ? lp.name : "-",
+                feel_result:        feel  ? 'PASS' : 'FAIL',
+                feel_peakSpeed:     feel  ? feel.peakSpd    : "-",
+                feel_bottomSpeed:   feel  ? feel.bottomSpd  : "-",
+                feel_drop:          feel  ? feel.drop        : "-",
+                feel_peakTime:      feel  ? feel.peakTime    : "-",
+                feel_bottomTime:    feel  ? feel.bottomTime  : "-",
+                power_result:       power ? 'PASS' : 'FAIL',
+                power_peakSpeed:    power ? power.peakSpd   : "-",
+                power_bottomSpeed:  power ? power.bottomSpd : "-",
+                power_drop:         power ? power.drop       : "-",
+                power_peakTime:     power ? power.peakTime   : "-",
+                power_bottomTime:   power ? power.bottomTime : "-",
+                cli_name:           fd.aCli,
+                analysisDate:       fd.aDate
+            }
+        };
+
+        // ─────────────────────────────────────────────
+        // RENDER REPORT HTML
+        // ─────────────────────────────────────────────
+        resultsBox.innerHTML = `
+        <div style="display:flex; justify-content:flex-end; margin-bottom:12px; gap:10px;" class="no-print">
+            <button id="btnExportSheet" onclick="exportToGoogleSheet()"
+                style="padding:8px 20px; cursor:pointer; border-radius:6px; border:1px solid #bcc8d4;
+                       background:var(--primary); color:white; font-weight:bold; font-size:14px; transition: background 0.2s;">
+                📊 Export to Google Sheet
+            </button>
+            <button onclick="printWithGraph()"
+                style="padding:8px 20px; cursor:pointer; border-radius:6px; border:1px solid #c9d3dd;
+                       background:#fff; font-weight:bold; font-size:14px;">
+                🖨️ Print Report
+            </button>
+        </div>
+
+        <div class="report-wrap">
+
+            <div class="report-letterhead">
+                <div class="rh-top-row">
+                    <div class="rh-org">Bhusawal Division</div>
+                    <div class="rh-center">
+                        <div class="rh-title">SPM Analysis (Using RTIS Data)</div>
+                        <div class="rh-overall">Overall Result :
+                            <span style="color:${overallColor}; font-weight:900;">${overallText}</span>
+                        </div>
+                    </div>
+                    <div class="rh-branch">Electrical (TRO) Branch</div>
+                </div>
+            </div>
+
+            <div class="report-body">
+
+                <div class="report-section-heading">Crew Details</div>
+                <table class="report-table">
+                    <thead><tr>
+                        <th>Name</th><th>Designation</th><th>ID</th><th>HQ</th><th>Nominated CLI</th>
+                    </tr></thead>
+                    <tbody>
+                        ${lp ? `<tr>
+                            <td style="font-weight:700;">${escapeHtml(lp.name||"-")}</td>
+                            <td>${escapeHtml(lp.type||"LP")}</td>
+                            <td>${escapeHtml(lp.id||"-")}</td>
+                            <td>${escapeHtml(lp.hq||"-")}</td>
+                            <td>${escapeHtml(lp.cli||"-")}</td>
+                        </tr>` : ""}
+                        ${alp ? `<tr>
+                            <td style="font-weight:700;">${escapeHtml(alp.name||"-")}</td>
+                            <td>${escapeHtml(alp.type||"ALP")}</td>
+                            <td>${escapeHtml(alp.id||"-")}</td>
+                            <td>${escapeHtml(alp.hq||"-")}</td>
+                            <td>${escapeHtml(alp.cli||"-")}</td>
+                        </tr>` : ""}
+                        ${!lp && !alp ? `<tr><td colspan="5" style="color:#aaa;">No crew selected</td></tr>` : ""}
+                    </tbody>
+                </table>
+
+                <div class="report-section-heading">Train Details</div>
+                <table class="report-table">
+                    <thead><tr>
+                        <th>Date</th><th>Train No</th><th>Section</th>
+                        <th>Direction</th><th>Type</th><th>Permitted Speed</th>
+                    </tr></thead>
+                    <tbody><tr>
+                        <td>${escapeHtml(fd.jDate)}</td>
+                        <td style="font-weight:700;">${escapeHtml(fd.trainNo)}</td>
+                        <td>${escapeHtml(fd.startStn)} → ${escapeHtml(fd.endStn)}</td>
+                        <td>${escapeHtml(fd.direction)}</td>
+                        <td>${escapeHtml(fd.tType)}</td>
+                        <td style="font-weight:700;">${escapeHtml(fd.mSpeed)}</td>
+                    </tr></tbody>
+                </table>
+
+                <div class="report-section-heading">Analysis Details</div>
+                <table class="report-table">
+                    <thead><tr>
+                        <th>Section</th><th>Train No</th><th>Max Speed</th>
+                        <th>Duration</th><th>Max Overspeed</th>
+                        <th>Overspeed Events</th><th>PSR Violations</th>
+                    </tr></thead>
+                    <tbody><tr>
+                        <td>${escapeHtml(fd.startStn)} → ${escapeHtml(fd.endStn)}</td>
+                        <td style="font-weight:700;">${escapeHtml(fd.trainNo)}</td>
+                        <td class="${parseFloat(maxRecorded) > (permSpeed||999) ? 'danger' : ''}"
+                            style="font-weight:700;">${maxRecorded} km/h</td>
+                        <td>${duration}</td>
+                        <td class="${parseFloat(maxOverspeed)>0 ? 'danger' : ''}"
+                            style="font-weight:700;">${maxOverspeed > 0 ? '+'+maxOverspeed : '0'} km/h</td>
+                        <td class="${overspeedEvents.length>0 ? 'danger' : 'spd-low'}"
+                            style="font-weight:700;">${overspeedEvents.length}</td>
+                        <td class="${psrViolations.length>0 ? 'warn' : 'spd-low'}"
+                            style="font-weight:700;">${psrViolations.length}</td>
+                    </tr></tbody>
+                </table>
+
+                <div class="report-section-heading">Brake Test</div>
+                <table class="report-table">
+                    <thead><tr>
+                        <th style="text-align:left; padding-left:12px;">Test</th>
+                        <th>Peak Speed</th><th>Bottom Speed</th>
+                        <th>Speed Drop</th><th>Peak Time</th><th>Bottom Time</th><th>Result</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr>
+                            <td class="td-label">Brake Feel Test (10–35 km/h, Drop ≥ 3)</td>
+                            <td>${feel ? feel.peakSpd+' km/h' : '—'}</td>
+                            <td>${feel ? feel.bottomSpd+' km/h' : '—'}</td>
+                            <td>${feel ? feel.drop+' km/h' : '—'}</td>
+                            <td>${feel ? escapeHtml(feel.peakTime) : '—'}</td>
+                            <td>${feel ? escapeHtml(feel.bottomTime) : '—'}</td>
+                            <td class="${feel ? 'td-result-pass' : 'td-result-fail'}">${feel ? 'PASS' : 'FAIL'}</td>
+                        </tr>
+                        <tr>
+                            <td class="td-label">Brake Power Test (50–80 km/h, Drop ≥ 7)</td>
+                            <td>${power ? power.peakSpd+' km/h' : '—'}</td>
+                            <td>${power ? power.bottomSpd+' km/h' : '—'}</td>
+                            <td>${power ? power.drop+' km/h' : '—'}</td>
+                            <td>${power ? escapeHtml(power.peakTime) : '—'}</td>
+                            <td>${power ? escapeHtml(power.bottomTime) : '—'}</td>
+                            <td class="${power ? 'td-result-pass' : 'td-result-fail'}">${power ? 'PASS' : 'FAIL'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                ${overspeedTableHtml}
+                ${psrTableHtml}
+                ${backtrackHtml}
+
+                <div class="report-section-heading">Remark</div>
+                <div style="min-height:36px; border-bottom:1px solid #b0bec5; margin-bottom:28px;"></div>
+
+                <div id="print-graph-container">
+                    <div class="pg-heading">📈 Speed &amp; Braking Profile</div>
+                    <img id="print-graph-img" src="" alt="Speed Profile Chart">
+                </div>
+
+                <div class="report-signature">
+                    <div class="sig-date">Date : ${escapeHtml(fd.aDate ? new Date(fd.aDate).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}) : '__/__/____')}</div>
+                    <div class="sig-right">
+                        <div style="margin-bottom:4px;">Analyzed by CLI</div>
+                        <div class="sig-name">${escapeHtml(fd.aCli || "_______________")}</div>
+                        <div class="sig-label">HQ : ${escapeHtml(fd.aHq || "___")}</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>`;
+    }
+
+    // ─────────────────────────────────────────────
+    // PSR ZONE BUILDER
+    // ─────────────────────────────────────────────
+    function tagSegmentWithPsr(segment) {
+        if (!window._activePsrData || !window._activePsrBbox.length) return;
+        const hasGps = segment.some(r => r.lat !== null);
+        if (!hasGps) return;
+        let tagCount = 0;
+        segment.forEach(row => {
+            row.psr = null; row.psrEntries = null;
+            if (row.lat === null || row.lon === null) return;
+            const matches = window._activePsrData.filter((p, i) => pointInPsrZone(row.lat, row.lon, p, i));
+            if (matches.length) {
+                row.psr = Math.min(...matches.map(p => p.speed));
+                row.psrEntries = matches;
+                tagCount++;
+            }
+        });
+        console.log(`PSR segment tagging: ${tagCount} of ${segment.length} rows tagged`);
+    }
+
+    function buildPsrZones(segment) {
+        if (!window._activePsrData) return [];
+        const zones = [];
+        if (!segment.length) return zones;
+
+        const hasGps = segment.some(r => r.lat !== null && r.lon !== null);
+        if (!hasGps) return zones;
+
+        let zoneStart = -1, zoneSpeed = null, zoneLabel = "", zonePsrId = null;
+
+        segment.forEach((row, i) => {
+            const spd = row.psr !== undefined ? row.psr : null;
+            const psrId = row.psrEntries && row.psrEntries.length ? row.psrEntries[0].id : null;
+
+            if (spd !== null) {
+                if (spd !== zoneSpeed || psrId !== zonePsrId) {
+                    if (zoneStart !== -1) {
+                        zones.push({ startIdx: zoneStart, endIdx: i - 1, speed: zoneSpeed, label: zoneLabel });
+                    }
+                    zoneStart = i;
+                    zoneSpeed = spd;
+                    zonePsrId = psrId;
+                    zoneLabel = row.psrEntries && row.psrEntries.length
+                        ? `${row.psrEntries[0].subSection} · ${spd} km/h` : `PSR ${spd} km/h`;
+                }
+            } else {
+                if (zoneStart !== -1) {
+                    zones.push({ startIdx: zoneStart, endIdx: i - 1, speed: zoneSpeed, label: zoneLabel });
+                    zoneStart = -1; zoneSpeed = null; zoneLabel = ""; zonePsrId = null;
+                }
+            }
+        });
+        if (zoneStart !== -1) {
+            zones.push({ startIdx: zoneStart, endIdx: segment.length - 1, speed: zoneSpeed, label: zoneLabel });
+        }
+        return zones;
+    }
+
+    // ─────────────────────────────────────────────
+    // CHART DRAWING
+    // ─────────────────────────────────────────────
+    function buildMarkerDataset(label, plotData, targetTime, color, pointStyle = "circle", size = 9) {
+        return {
+            label,
+            data: plotData.map(row => (formatTime(row.time) === targetTime ? row.speed : null)),
+            pointRadius: size, pointHoverRadius: size + 3,
+            backgroundColor: color, borderColor: "#fff",
+            borderWidth: 2,
+            pointStyle, showLine: false,
+            order: 0
+        };
+    }
+
+    function drawChart(data, feel, power, psrZones = []) {
+        if (myChart) {
+            myChart.destroy();
+            myChart = null;
+        }
+        const container = document.getElementById("speedChartContainer");
+        const oldCanvas = document.getElementById("speedChart");
+        if (oldCanvas) oldCanvas.remove();
+        const newCanvas = document.createElement("canvas");
+        newCanvas.id = "speedChart";
+        container.appendChild(newCanvas);
+        const ctx = newCanvas.getContext("2d");
+
+        const maxSpeedVal = parseFloat(document.getElementById("maxSpeed").value) || null;
+
+        const stationMarkers = [];
+        let lastStn = "";
+        data.forEach((item, index) => {
+            if (item.stn && item.stn !== lastStn) {
+                stationMarkers.push({ index, name: item.stn });
+                lastStn = item.stn;
+            }
+        });
+
+        const datasets = [{
+            label: "Speed (km/h)",
+            data: data.map(item => item.speed),
+            borderColor: "#1565c0",
+            borderWidth: 2.5,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: "#1565c0",
+            fill: { target: "origin", above: "rgba(21,101,192,0.07)" },
+            tension: 0.3,
+            order: 1
+        }];
+
+        if (maxSpeedVal) {
+            datasets.push({
+                label: `Speed Limit (${maxSpeedVal} km/h)`,
+                data: data.map(() => maxSpeedVal),
+                borderColor: "#e53935",
+                borderWidth: 2,
+                borderDash: [10, 5],
+                pointRadius: 0, fill: false, tension: 0, order: 2
+            });
+        }
+
+        if (feel) {
+            datasets.push(buildMarkerDataset("Feel – Peak",   data, feel.peakTime,   "#1976d2", "circle",   10));
+            datasets.push(buildMarkerDataset("Feel – Bottom", data, feel.bottomTime, "#e53935", "triangle", 10));
+        }
+        if (power) {
+            datasets.push(buildMarkerDataset("Power – Peak",   data, power.peakTime,   "#2e7d32", "circle",   10));
+            datasets.push(buildMarkerDataset("Power – Bottom", data, power.bottomTime, "#ef6c00", "triangle", 10));
+        }
+
+        if (psrZones.length) {
+            const psrBySpeed = {};
+            psrZones.forEach(z => {
+                if (!psrBySpeed[z.speed]) psrBySpeed[z.speed] = Array(data.length).fill(null);
+                for (let i = z.startIdx; i <= z.endIdx; i++) psrBySpeed[z.speed][i] = z.speed;
+            });
+            Object.entries(psrBySpeed).sort((a,b) => a[0]-b[0]).forEach(([spd, vals]) => {
+                datasets.push({
+                    label: `PSR Limit ${spd} km/h`,
+                    data: vals,
+                    borderColor: "#e65100",
+                    borderWidth: 2,
+                    borderDash: [6, 3],
+                    pointRadius: 0, fill: false, tension: 0, order: 3, spanGaps: false
+                });
+            });
+        }
+
+        const idxToStn = {};
+        data.forEach((item, i) => { if (item.stn) idxToStn[i] = item.stn; });
+        const stnAtIdx = Array(data.length).fill("");
+        let cur = "";
+        data.forEach((item, i) => { if (item.stn) cur = item.stn; stnAtIdx[i] = cur; });
+
+        const stationLabelPlugin = {
+            id: "stationLabelPlugin",
+            afterDraw(chart) {
+                const { ctx, chartArea, scales } = chart;
+                const xScale = scales.x;
+
+                stationMarkers.forEach((marker, mi) => {
+                    const xPos = xScale.getPixelForValue(marker.index);
+                    if (xPos < chartArea.left || xPos > chartArea.right) return;
+
+                    const labelY = chartArea.bottom + (mi % 2 === 0 ? 10 : 38);
+
+                    ctx.save();
+                    ctx.strokeStyle = "rgba(100,120,150,0.35)";
+                    ctx.setLineDash([6, 4]);
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    ctx.moveTo(xPos, chartArea.top);
+                    ctx.lineTo(xPos, chartArea.bottom);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    ctx.strokeStyle = "#c62828";
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(xPos, chartArea.bottom);
+                    ctx.lineTo(xPos, chartArea.bottom + 6);
+                    ctx.stroke();
+
+                    ctx.translate(xPos + 1, labelY);
+                    ctx.rotate(Math.PI / 2);
+                    ctx.textAlign = "left";
+                    ctx.textBaseline = "middle";
+                    ctx.font = "bold 11px Arial";
+                    const tw = ctx.measureText(marker.name).width;
+                    ctx.fillStyle = "rgba(255,255,255,0.85)";
+                    ctx.fillRect(-2, -7, tw + 4, 14);
+                    ctx.fillStyle = "#c62828";
+                    ctx.fillText(marker.name, 0, 0);
+
+                    ctx.restore();
+                });
+            }
+        };
+
+        const psrZonePlugin = {
+            id: "psrZonePlugin",
+            beforeDraw(chart) {
+                if (!psrZones.length) return;
+                const { ctx, chartArea, scales } = chart;
+                const xScale = scales.x;
+                const yScale = scales.y;
+
+                psrZones.forEach(zone => {
+                    const x1 = xScale.getPixelForValue(zone.startIdx);
+                    const x2 = xScale.getPixelForValue(zone.endIdx);
+                    if (x2 < chartArea.left || x1 > chartArea.right) return;
+                    const left  = Math.max(chartArea.left,  Math.min(x1, x2));
+                    const right = Math.min(chartArea.right, Math.max(x1, x2));
+                    const ySpd  = yScale.getPixelForValue(zone.speed);
+
+                    ctx.save();
+                    ctx.fillStyle = "rgba(230, 81, 0, 0.07)";
+                    ctx.fillRect(left, ySpd, right - left, chartArea.bottom - ySpd);
+
+                    ctx.strokeStyle = "rgba(230, 81, 0, 0.5)";
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 3]);
+                    ctx.beginPath();
+                    ctx.moveTo(left, ySpd);
+                    ctx.lineTo(right, ySpd);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    if (right - left > 30) {
+                        ctx.font = "bold 10px Arial";
+                        ctx.fillStyle = "rgba(230,81,0,0.85)";
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "bottom";
+                        const labelX = left + (right - left) / 2;
+                        ctx.fillText(zone.speed, labelX, ySpd - 3);
+                    }
+                    ctx.restore();
+                });
+            }
+        };
+
+        myChart = new Chart(ctx, {
+            type: "line",
+            data: { labels: data.map(item => formatTime(item.time)), datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 400 },
+                layout: { padding: { bottom: 80, top: 10, left: 5, right: 10 } },
+                interaction: { mode: "index", intersect: false },
+                scales: {
+                    y: {
+                        min: 0,
+                        title: { display: true, text: "Speed (km/h)", font: { size: 13, weight: "bold" }, color: "#3a4a5c" },
+                        grid: {
+                            color: ctx => ctx.tick.value === 0 ? "rgba(0,0,0,0.15)" : "rgba(180,195,210,0.4)",
+                            lineWidth: ctx => ctx.tick.value % 20 === 0 ? 1.2 : 0.7
+                        },
+                        ticks: { stepSize: 10, font: { size: 12 }, color: "#5f6c7b" }
+                    },
+                    x: {
+                        ticks: { autoSkip: true, maxTicksLimit: 20, maxRotation: 0, font: { size: 11 }, color: "#5f6c7b" },
+                        title: { display: true, text: "Time", font: { size: 13, weight: "bold" }, color: "#3a4a5c" },
+                        grid: { color: "rgba(180,195,210,0.25)" }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true, position: "top",
+                        labels: {
+                            usePointStyle: true, pointStyleWidth: 14, padding: 18, font: { size: 12 },
+                            filter: function(item) {
+                                return !item.text.includes("PSR Limit");
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: "rgba(20,40,70,0.92)",
+                        titleFont: { size: 13, weight: "bold" },
+                        bodyFont: { size: 12 }, padding: 12, cornerRadius: 8,
+                        callbacks: {
+                            title(items) { return `🕐 ${items[0].label}`; },
+                            beforeBody(items) {
+                                const i = items[0].dataIndex;
+                                const lines = [];
+                                const stn = stnAtIdx[i];
+                                if (stn) lines.push(`📍 Station: ${stn}`);
+                                const row = data[i];
+                                if (row && row.psr !== null) {
+                                    const sub = row.psrEntries && row.psrEntries[0] ? ` (${row.psrEntries[0].subSection})` : "";
+                                    lines.push(`🚧 PSR Limit: ${row.psr} km/h${sub}`);
+                                    if (row.speed > row.psr + SPEED_TOLERANCE)
+                                        lines.push(`⛔ PSR Exceed: +${(row.speed - row.psr).toFixed(1)} km/h`);
+                                }
+                                return lines.length ? lines : null;
+                            },
+                            label(item) {
+                                if (item.datasetIndex === 0) return ` Speed: ${item.parsed.y} km/h`;
+                                if (maxSpeedVal && item.datasetIndex === 1) return ` Limit: ${maxSpeedVal} km/h`;
+                                return ` ${item.dataset.label}: ${item.parsed.y} km/h`;
+                            },
+                            afterBody(items) {
+                                const i = items[0].dataIndex;
+                                const spd = data[i].speed;
+                                if (maxSpeedVal && spd > maxSpeedVal + SPEED_TOLERANCE)
+                                    return `⚠️ Overspeed by ${(spd - maxSpeedVal).toFixed(1)} km/h`;
+                                return null;
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [stationLabelPlugin, psrZonePlugin]
+        });
+    }
+
+    // ─────────────────────────────────────────────
+    // CSV LOADING
+    // ─────────────────────────────────────────────
+    csvFileInput.addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        resetUI();
+        if (!file) { setStatus("No file selected.", "warn"); return; }
+        try {
+            const text    = await file.text();
+            const lines   = text.split(/\r?\n/).filter(l => l.trim() !== "");
+            if (lines.length < 2) { setStatus("CSV does not contain enough rows.", "error"); return; }
+
+            setStatus("Reading CSV...", "");
+            csvDelimiter = detectDelimiter(lines[0]);
+
+            const headers  = parseCsvLine(lines[0]).map(h => h.toLowerCase().trim());
+            const timeIdx  = headers.findIndex(h => h.includes("time") && !h.includes("dist"));
+            const speedIdx = headers.findIndex(h => h === "speed" || (h.includes("speed") && !h.includes("dist")));
+            const stnIdx   = headers.findIndex(h => h.includes("stationcode") || h.includes("stn") || h === "station" || h === "code");
+            const latIdx   = headers.findIndex(h => h === "latitude" || h.includes("lat"));
+            const lonIdx   = headers.findIndex(h => h === "longitude" || h.includes("lon") || h.includes("lng"));
+            const distIdx  = headers.findIndex(h => h.replace(/[^a-z]/g, "") === "distfromspeed");
+
+            if (timeIdx === -1 || speedIdx === -1 || stnIdx === -1) {
+                setStatus(`CSV column detection failed. Found: [${headers.join(" | ")}]. Need Time, Speed, Station.`, "error");
+                return;
+            }
+
+            allData = lines.slice(1).map(line => {
+                const cols = parseCsvLine(line);
+                const lat  = latIdx  !== -1 ? parseFloat(cols[latIdx])  : NaN;
+                const lon  = lonIdx  !== -1 ? parseFloat(cols[lonIdx])  : NaN;
+                const dist = distIdx !== -1 ? parseFloat(cols[distIdx]) : NaN;
+                return {
+                    time:  (cols[timeIdx]  || "").trim(),
+                    speed: parseFloat(cols[speedIdx]) || 0,
+                    stn:   (cols[stnIdx]   || "").trim().toUpperCase(),
+                    lat:   isNaN(lat)  ? null : lat,
+                    lon:   isNaN(lon)  ? null : lon,
+                    dist:  isNaN(dist) ? null : dist,
+                    psr:   null
+                };
+            }).filter(item => item.time);
+
+            if (!allData.length) { setStatus("No valid data rows found.", "error"); return; }
+
+            const stationList = [...new Set(allData.map(item => item.stn).filter(Boolean))];
+            populateStationDropdowns(allData);
+            const hasPsr  = (typeof PSR_DATA !== "undefined" || typeof PSR_IGP_BSL !== "undefined") && latIdx !== -1 && lonIdx !== -1;
+            const hasDist = distIdx !== -1;
+            setStatus(`Data loaded. Rows: ${allData.length}, Stations: ${stationList.length}` + (hasPsr ? " · PSR ready" : "") + (hasDist ? " · distFromSpeed ready" : ""), "success");
+        } catch (err) {
+            setStatus("Failed to read CSV file.", "error");
+            console.error(err);
+        }
+    });
+
+    // ─────────────────────────────────────────────
+    // PLOT / PROCESS
+    // ─────────────────────────────────────────────
+    plotButton.addEventListener("click", () => {
+        resetUI();
+
+        if (!allData.length) { setStatus("Please load a CSV file first.", "error"); return; }
+
+        const trainNo = document.getElementById("trainNo").value.trim();
+        if (!trainNo) { setStatus("Please enter the Train No.", "warn"); return; }
+        if (!document.getElementById("trainType").value) { setStatus("Please select a Train Type.", "warn"); return; }
+        if (!document.getElementById("journeyDate").value) { setStatus("Please select the Journey Date.", "warn"); return; }
+
+        const direction = document.getElementById("trainDirection").value;
+        if (!direction) { setStatus("Please select a Train Direction.", "warn"); return; }
+
+        const startVal = startStationSelect.value;
+        const endVal   = endStationSelect.value;
+
+        if (!startVal || !endVal) { setStatus("Please select both start and end stations.", "warn"); return; }
+        if (startVal === endVal) { setStatus("Start and End stops cannot be the same.", "warn"); return; }
+
+        function resolveStopIdx(val, searchAfter = 0) {
+            if (val.startsWith("idx:")) return parseInt(val.slice(4), 10);
+            const stn = val.slice(5);
+            return allData.findIndex((r, i) => i >= searchAfter && r.stn === stn);
+        }
+
+        const sStop = resolveStopIdx(startVal);
+        if (sStop === -1 || !allData[sStop]) { setStatus("Start stop not found in data.", "error"); return; }
+
+        const eStop = resolveStopIdx(endVal, sStop + 1);
+        if (eStop === -1 || !allData[eStop]) { setStatus("End stop not found after start stop in data.", "error"); return; }
+
+        if (eStop <= sStop) { setStatus("End stop must come after start stop in the data.", "warn"); return; }
+
+        let endRise = eStop;
+        for (let i = eStop + 1; i < Math.min(eStop + 300, allData.length); i++) {
+            if (allData[i].speed > STOP_SPEED_THRESHOLD) { endRise = i; break; }
+        }
+
+        const segment = allData.slice(sStop, endRise + 1);
+        if (!segment.length) { setStatus("No data segment could be extracted between stations.", "error"); return; }
+
+        plotButton.disabled    = true;
+        plotButton.textContent = "Processing…";
+
+        try {
+            const direction = document.getElementById("trainDirection").value;
+            if (direction === "IGP_BSL" && typeof PSR_IGP_BSL !== "undefined") {
+                window._activePsrData = PSR_IGP_BSL;
+                window._activePsrBbox = buildPsrBbox(window._activePsrData);
+            } else if (direction === "BSL_IGP" && typeof PSR_BSL_IGP !== "undefined") {
+                window._activePsrData = PSR_BSL_IGP;
+                window._activePsrBbox = buildPsrBbox(window._activePsrData);
+            } else {
+                window._activePsrData = undefined;
+                window._activePsrBbox = [];
+            }
+
+            tagSegmentWithPsr(segment);
+            const psrZones = buildPsrZones(segment);
+
+            const feel  = detectBrakeTest(segment, FEEL_TEST.minSpd,  FEEL_TEST.maxSpd,  FEEL_TEST.requiredDrop);
+            const power = detectBrakeTest(segment, POWER_TEST.minSpd, POWER_TEST.maxSpd, POWER_TEST.requiredDrop);
+
+            const fd = gatherFormData();
+            renderReport(fd, feel, power, segment);
+
+            const decimationResult = decimateData(segment, feel, power, psrZones);
+            const optimizedSegment = decimationResult.optimizedData;
+            const mapIndex         = decimationResult.mapIndex;
+
+            const mappedPsrZones = psrZones.map(z => ({
+                ...z,
+                startIdx: mapIndex(z.startIdx),
+                endIdx: mapIndex(z.endIdx)
+            }));
+
+            openPage('page2');
+
+            setTimeout(() => {
+                drawChart(optimizedSegment, feel, power, mappedPsrZones);
+                setStatus("Analysis complete.", "success");
+            }, 120);
+
+        } finally {
+            plotButton.disabled    = false;
+            plotButton.textContent = "Process Data & View Graph →";
+        }
+    });
+
+    // ─────────────────────────────────────────────
+    // PRINT WITH GRAPH
+    // Captures the Chart.js canvas as a PNG image,
+    // injects it into the report, then prints.
+    // ─────────────────────────────────────────────
+    function printWithGraph() {
+        const canvas = document.getElementById("speedChart");
+        const imgEl  = document.getElementById("print-graph-img");
+
+        if (canvas && imgEl) {
+            // toDataURL captures the chart at full resolution
+            try {
+                const dataUrl = canvas.toDataURL("image/png", 1.0);
+                imgEl.src = dataUrl;
+                imgEl.style.display = "block";
+            } catch(e) {
+                // If canvas is tainted or unavailable, hide graph section gracefully
+                imgEl.style.display = "none";
+                console.warn("Chart capture failed:", e);
+            }
+        } else if (imgEl) {
+            imgEl.style.display = "none";
+        }
+
+        // Small delay to let the image render before browser opens print dialog
+        setTimeout(() => window.print(), 180);
+    }
+    </script>
+</body>
+</html>
