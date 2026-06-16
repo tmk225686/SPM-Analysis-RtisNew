@@ -1330,5 +1330,13 @@ const CREW_MASTER = {
     "BSLX3527": { hq: "BSLX", name: "A W AWATHARE ALL G26G COLP", type: "LPG", cli: "R K Meghwal" },
     "BSLX3528": { hq: "BSLX", name: "V S KAWALE ALLG26G BDCOLP", type: "LPG", cli: "R C Meena" },
     "BSLX3529": { hq: "BSLX", name: "A M SONI LRD", type: "LPG", cli: "R L Patil" },
-    "CLI001": { hq: "BSL", name: "CLI Only", type: "CLI", cli: "T M Kulkarni" }
+    "CLI001": { hq: "BSL", name: "CLI Only", type: "CLI", cli: "T M Kulkarni" },
+    "CLI002": { hq: "BSL", name: "CLI Only", type: "CLI", cli: "Deepak Pawar" },
+    "CLI003": { hq: "BSL", name: "CLI Only", type: "CLI", cli: "Amit Saxena" },
+    "CLI004": { hq: "BSL", name: "CLI Only", type: "CLI", cli: "S K Sharma" },
+    "CLI005": { hq: "BSL", name: "CLI Only", type: "CLI", cli: "G M Sable" },
+    "CLI006": { hq: "BSL", name: "CLI Only", type: "CLI", cli: "M J Rawat" },
+    "CLI007": { hq: "BSL", name: "CLI Only", type: "CLI", cli: "K S Rajput" },
+    "CLI008": { hq: "BSL", name: "CLI Only", type: "CLI", cli: "Faruk Deshpande" },
+    "CLI009": { hq: "BSL", name: "CLI Only", type: "CLI", cli: "K M Singh" }
 };
