@@ -222,8 +222,10 @@
         .badge-lp  { background: #dbeafe; color: #1e40af; }
         .badge-alp { background: #dcfce7; color: #166534; }
 
-        .grid-train-row1 { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 0; }
-        .grid-train-row2 { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 14px; margin-bottom: 0; margin-top: 14px; }
+        /* Aligned 3-column rows for structural balance across configurations */
+        .grid-train-aligned { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 14px; }
+        .grid-train-aligned:last-child { margin-bottom: 0; }
+        
         .grid-crew      { display: grid; grid-template-columns: 1fr 2fr 0.5fr 1.5fr; gap: 14px; margin-bottom: 0; }
         .grid-analysis  { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 0; }
 
@@ -432,7 +434,6 @@
         .sig-name  { font-weight: 700; font-size: 13px; margin-top: 2px; }
         .sig-label { font-size: 11px; color: #5f6c7b; }
 
-        /* Export status toast */
         #exportToast {
             display: none;
             position: fixed;
@@ -451,7 +452,6 @@
         #exportToast.success { background: var(--success); }
         #exportToast.error   { background: var(--error); }
 
-        /* Print graph container — hidden on screen, shown only when printing */
         #print-graph-container {
             display: none;
             width: 100%;
@@ -482,57 +482,29 @@
             #page3 { display: block !important; background: #fff; padding: 0; }
             .main-container { margin: 0; padding: 0; max-width: 100%; }
             .report-wrap { box-shadow: none; border: none; border-radius: 0; }
-
-            /* Show the graph image when printing */
             #print-graph-container { display: block !important; }
-
-            .report-section-heading {
-                break-after: avoid;
-                page-break-after: avoid;
-            }
+            .report-section-heading { break-after: avoid; page-break-after: avoid; }
             .report-section-heading + *,
             .report-section-heading + table,
-            .report-section-heading + p {
-                break-before: avoid;
-                page-break-before: avoid;
-            }
-            .brake-card,
-            .brake-result-grid,
-            .report-crew,
-            .report-stats,
-            .backtrack-note,
-            .report-info-grid,
-            .report-signature {
-                break-inside: avoid;
-                page-break-inside: avoid;
-            }
-            #print-graph-container {
-                break-inside: avoid;
-                page-break-inside: avoid;
+            .report-section-heading + p { break-before: avoid; page-break-before: avoid; }
+            .brake-card, .brake-result-grid, .report-crew, .report-stats,
+            .backtrack-note, .report-info-grid, .report-signature, #print-graph-container {
+                break-inside: avoid; page-break-inside: avoid;
             }
             thead { break-inside: avoid; page-break-inside: avoid; }
             tr    { break-inside: avoid; page-break-inside: avoid; }
-
-            /* Strip box styles for output print generation */
             .report-input-remark {
-                border: none !important;
-                background: transparent !important;
-                padding: 0 !important;
-                font-size: 12px !important;
-                outline: none !important;
+                border: none !important; background: transparent !important;
+                padding: 0 !important; font-size: 12px !important; outline: none !important;
             }
-
-            /* Ensures that if no entry is typed, the placeholder text remains completely blank when printed */
-            .report-input-remark::placeholder {
-                color: transparent !important;
-            }
+            .report-input-remark::placeholder { color: transparent !important; }
         }
 
         @media (max-width: 900px) {
             .report-info-grid, .report-stats { grid-template-columns: 1fr 1fr; }
             .brake-result-grid, .report-crew { grid-template-columns: 1fr; }
             .report-signature { grid-template-columns: 1fr; }
-            .grid-train-row1, .grid-train-row2, .grid-crew, .grid-analysis, .report-grid-details {
+            .grid-train-aligned, .grid-crew, .grid-analysis, .report-grid-details {
                 grid-template-columns: 1fr;
             }
         }
@@ -570,7 +542,7 @@
                     <span class="section-icon">🚂</span>
                     Train Details
                 </div>
-                <div class="grid-train-row1">
+                <div class="grid-train-aligned">
                     <div class="input-item">
                         <label for="csvFile">📂 RTIS Data File</label>
                         <input type="file" id="csvFile" accept=".csv">
@@ -579,6 +551,12 @@
                         <label for="trainNo">🔢 Train No</label>
                         <input type="text" id="trainNo" placeholder="e.g. 12345">
                     </div>
+                    <div class="input-item">
+                        <label for="locoNo">🎛️ Loco No</label>
+                        <input type="text" id="locoNo" placeholder="e.g. 30214">
+                    </div>
+                </div>
+                <div class="grid-train-aligned">
                     <div class="input-item">
                         <label for="journeyDate">📅 Journey Date</label>
                         <input type="date" id="journeyDate">
@@ -597,6 +575,8 @@
                         <label for="maxSpeed">⚡ Max Speed (km/h)</label>
                         <input type="number" id="maxSpeed" placeholder="km/h" min="1" max="200">
                     </div>
+                </div>
+                <div class="grid-train-aligned">
                     <div class="input-item">
                         <label for="trainDirection">🧭 Direction</label>
                         <select id="trainDirection">
@@ -605,8 +585,6 @@
                             <option value="BSL_IGP">BSL → IGP</option>
                         </select>
                     </div>
-                </div>
-                <div class="grid-train-row2">
                     <div class="input-item">
                         <label for="startStation">🟢 Start Station</label>
                         <select id="startStation"><option value="">-- Load CSV First --</option></select>
@@ -615,7 +593,6 @@
                         <label for="endStation">🔴 End Station</label>
                         <select id="endStation"><option value="">-- Load CSV First --</option></select>
                     </div>
-                    <div></div>
                 </div>
             </div>
 
@@ -714,17 +691,11 @@
     <script src="psr_bsl_igp.js"></script>
 
     <script>
-    // ─────────────────────────────────────────────
-    // PSR DATA HELPERS
-    // ─────────────────────────────────────────────
     function getPsrInRange(fromKm, toKm) {
         if (!window._activePsrData) return [];
         return window._activePsrData.filter(p => p.startKm < toKm && p.endKm > fromKm);
     }
 
-    // ─────────────────────────────────────────────
-    // GOOGLE SHEET EXPORT
-    // ─────────────────────────────────────────────
     window._lastCompiledPayload = null;
 
     function showToast(msg, type = "", duration = 3500) {
@@ -751,17 +722,15 @@
         btn.disabled = true;
         btn.innerHTML = "⏳ Exporting...";
 
-        // Google Apps Script Web App deployment URL
         const targetUrl = "https://script.google.com/macros/s/AKfycby3dNfNks4uhuGCW9hUcWiT50jk0QX2oyZBs12JdbONiUxna2ZClVXN5G8nx0K1Yz35EA/exec";
 
         fetch(targetUrl, {
             method: "POST",
-            mode: "no-cors",  // Required when running from file:// or cross-origin without CORS headers
+            mode: "no-cors",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(window._lastCompiledPayload)
         })
         .then(() => {
-            // no-cors always resolves — treat as success
             showToast("✅ Data pushed to Google Sheet!", "success");
             btn.innerHTML = "✅ Exported";
             btn.style.background = "var(--success)";
@@ -786,9 +755,6 @@
         return Math.min(...matches.map(p => p.speed));
     }
 
-    // ─────────────────────────────────────────────
-    // CONSTANTS
-    // ─────────────────────────────────────────────
     const STOP_SPEED_THRESHOLD = 1.0;
     const FEEL_TEST  = { minSpd: 10, maxSpd: 35, requiredDrop: 3 };
     const POWER_TEST = { minSpd: 50, maxSpd: 80, requiredDrop: 7 };
@@ -796,9 +762,6 @@
     const SPEED_TOLERANCE = 2;
     const BACKTRACK_DISTANCES_M = [2500, 2000, 1500, 1000, 750, 500, 110, 20];
 
-    // ─────────────────────────────────────────────
-    // DOM REFERENCES
-    // ─────────────────────────────────────────────
     const csvFileInput       = document.getElementById("csvFile");
     const startStationSelect = document.getElementById("startStation");
     const endStationSelect   = document.getElementById("endStation");
@@ -806,9 +769,6 @@
     const statusBox          = document.getElementById("status");
     const resultsBox         = document.getElementById("testAnalysisResults");
 
-    // ─────────────────────────────────────────────
-    // STATE
-    // ─────────────────────────────────────────────
     let allData = [];
     let myChart = null;
 
@@ -1258,11 +1218,13 @@
         const alpId = document.getElementById("alpIdSelect").value;
 
         let lpInfo = "Not Selected", alpInfo = "Not Selected";
-        if (lpId && typeof CREW_MASTER === 'undefined' && CREW_MASTER[lpId]) {
+        
+        // FIX: Evaluated conditionally logic properly (changed 'undefined' to check truthy existence)
+        if (lpId && typeof CREW_MASTER !== 'undefined' && CREW_MASTER[lpId]) {
             const c = CREW_MASTER[lpId];
             lpInfo = `${lpId}, ${c.name}, ${c.type}, ${c.hq}, Nominated CLI: ${c.cli}`;
         }
-        if (alpId && typeof CREW_MASTER === 'undefined' && CREW_MASTER[alpId]) {
+        if (alpId && typeof CREW_MASTER !== 'undefined' && CREW_MASTER[alpId]) {
             const c = CREW_MASTER[alpId];
             alpInfo = `${alpId}, ${c.name}, ${c.type}, ${c.hq}, Nominated CLI: ${c.cli}`;
         }
@@ -1271,6 +1233,7 @@
         const dirLabel = dirVal === "IGP_BSL" ? "IGP → BSL" : dirVal === "BSL_IGP" ? "BSL → IGP" : "-";
         return {
             trainNo:   document.getElementById("trainNo").value    || "-",
+            locoNo:    document.getElementById("locoNo").value     || "-",
             jDate:     document.getElementById("journeyDate").value || "-",
             tType:     document.getElementById("trainType").value   || "-",
             mSpeed:    document.getElementById("maxSpeed").value ? document.getElementById("maxSpeed").value + " km/h" : "-",
@@ -1316,7 +1279,6 @@
             else duration = "-";
         }
 
-        // ── PSR Violations ──
         const psrViolations = [];
         if (segment) {
             let vStart = null, vSpeed = null, vPsr = null, vSub = "";
@@ -1343,7 +1305,6 @@
             });
         }
 
-        // ── Overspeed Events ──
         const overspeedEvents = [];
         if (segment && overspeedThreshold) {
             let evStart = null, evMax = 0;
@@ -1372,9 +1333,7 @@
             }
         }
 
-        // ── Backtrack / Approach Speed ──
         const backtrackRows = buildBacktrackTable(segment, fd.startStn);
-
         let backtrackHtml = "";
         const irregularities = [];
 
@@ -1548,14 +1507,10 @@
         const overallColor = overallPass ? "var(--success)" : overallPartial ? "var(--warn)" : "var(--error)";
         const overallText  = overallPass ? "SATISFACTORY" : overallPartial ? "OBSERVATIONS NOTED" : "UNSATISFACTORY";
 
-        // ─────────────────────────────────────────────
-        // FULL COMPILED PAYLOAD — ALL TABS
-        // ─────────────────────────────────────────────
         window._lastCompiledPayload = {
-
-            // TAB 1: Daily Record (summary row)
             dailyRecord: {
                 trainNo:                fd.trainNo,
+                locoNo:                 fd.locoNo,
                 journeyDate:            fd.jDate,
                 section:                `${fd.startStn} → ${fd.endStn}`,
                 direction:              fd.direction,
@@ -1577,8 +1532,6 @@
                 cli_hq:                 fd.aHq,
                 analysisDate:           fd.aDate
             },
-
-            // TAB 2: Approach Speed Irregularities (one row per checkpoint breach)
             irregularities: irregularities.map(v => ({
                 trainNo:        fd.trainNo,
                 journeyDate:    fd.jDate,
@@ -1593,8 +1546,6 @@
                 cli_name:       fd.aCli,
                 analysisDate:   fd.aDate
             })),
-
-            // TAB 3: Overspeed Events (one row per event — previously missing)
             overspeedEvents: overspeedEvents.map(e => ({
                 trainNo:        fd.trainNo,
                 journeyDate:    fd.jDate,
@@ -1608,8 +1559,6 @@
                 cli_name:       fd.aCli,
                 analysisDate:   fd.aDate
             })),
-
-            // TAB 4: PSR Violations (one row per violation — previously missing)
             psrViolations: psrViolations.map(v => ({
                 trainNo:        fd.trainNo,
                 journeyDate:    fd.jDate,
@@ -1623,8 +1572,6 @@
                 cli_name:       fd.aCli,
                 analysisDate:   fd.aDate
             })),
-
-            // TAB 5: Brake Test Details (full numbers — previously only PASS/FAIL)
             brakeTests: {
                 trainNo:            fd.trainNo,
                 journeyDate:        fd.jDate,
@@ -1647,9 +1594,6 @@
             }
         };
 
-        // ─────────────────────────────────────────────
-        // RENDER REPORT HTML
-        // ─────────────────────────────────────────────
         resultsBox.innerHTML = `
         <div style="display:flex; justify-content:flex-end; margin-bottom:12px; gap:10px;" class="no-print">
             <button id="btnExportSheet" onclick="exportToGoogleSheet()"
@@ -1708,12 +1652,13 @@
                 <div class="report-section-heading">Train Details</div>
                 <table class="report-table">
                     <thead><tr>
-                        <th>Date</th><th>Train No</th><th>Section</th>
+                        <th>Date</th><th>Train No</th><th>Loco No</th><th>Section</th>
                         <th>Direction</th><th>Type</th><th>Permitted Speed</th>
                     </tr></thead>
                     <tbody><tr>
                         <td>${escapeHtml(fd.jDate)}</td>
                         <td style="font-weight:700;">${escapeHtml(fd.trainNo)}</td>
+                        <td style="font-weight:700;">${escapeHtml(fd.locoNo)}</td>
                         <td>${escapeHtml(fd.startStn)} → ${escapeHtml(fd.endStn)}</td>
                         <td>${escapeHtml(fd.direction)}</td>
                         <td>${escapeHtml(fd.tType)}</td>
@@ -1797,9 +1742,6 @@
         </div>`;
     }
 
-    // ─────────────────────────────────────────────
-    // PSR ZONE BUILDER
-    // ─────────────────────────────────────────────
     function tagSegmentWithPsr(segment) {
         if (!window._activePsrData || !window._activePsrBbox.length) return;
         const hasGps = segment.some(r => r.lat !== null);
@@ -1856,9 +1798,6 @@
         return zones;
     }
 
-    // ─────────────────────────────────────────────
-    // CHART DRAWING
-    // ─────────────────────────────────────────────
     function buildMarkerDataset(label, plotData, targetTime, color, pointStyle = "circle", size = 9) {
         return {
             label,
@@ -2114,9 +2053,6 @@
         });
     }
 
-    // ─────────────────────────────────────────────
-    // CSV LOADING
-    // ─────────────────────────────────────────────
     csvFileInput.addEventListener("change", async (event) => {
         const file = event.target.files[0];
         resetUI();
@@ -2171,9 +2107,6 @@
         }
     });
 
-    // ─────────────────────────────────────────────
-    // PLOT / PROCESS
-    // ─────────────────────────────────────────────
     plotButton.addEventListener("click", () => {
         resetUI();
 
@@ -2263,23 +2196,16 @@
         }
     });
 
-    // ─────────────────────────────────────────────
-    // PRINT WITH GRAPH
-    // Captures the Chart.js canvas as a PNG image,
-    // injects it into the report, then prints.
-    // ─────────────────────────────────────────────
     function printWithGraph() {
         const canvas = document.getElementById("speedChart");
         const imgEl  = document.getElementById("print-graph-img");
 
         if (canvas && imgEl) {
-            // toDataURL captures the chart at full resolution
             try {
                 const dataUrl = canvas.toDataURL("image/png", 1.0);
                 imgEl.src = dataUrl;
                 imgEl.style.display = "block";
             } catch(e) {
-                // If canvas is tainted or unavailable, hide graph section gracefully
                 imgEl.style.display = "none";
                 console.warn("Chart capture failed:", e);
             }
@@ -2287,7 +2213,6 @@
             imgEl.style.display = "none";
         }
 
-        // Small delay to let the image render before browser opens print dialog
         setTimeout(() => window.print(), 180);
     }
     </script>
